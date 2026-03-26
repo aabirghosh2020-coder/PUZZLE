@@ -99,8 +99,6 @@
 
     <script>
         // --- CONFIGURATION ---
-        // 1. Upload your image to a hosting service (like Imgur, PostImages, or your GitHub repository).
-        // 2. Paste the direct link to the image below.
         const imageUrl = 'https://github.com/aabirghosh2020-coder/PUZZLE/blob/main/IMG_20260314_152053.jpg';
 
         const gridSize = 3; // 3x3 puzzle
@@ -223,7 +221,7 @@
             });
 
             if (isSolved) {
-                statusDisplay.textContent = "🎉 Puzzle Solved! 🎉";
+                statusDisplay.textContent = " Puzzle Solved!";
             }
         }
 
