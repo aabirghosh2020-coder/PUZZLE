@@ -227,7 +227,6 @@
 
         // Start the game
         createPuzzle();
-        // You can choose to shuffle automatically on load
         // shufflePuzzle(); 
 
     </script>
