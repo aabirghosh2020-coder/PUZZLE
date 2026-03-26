@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Sliding Puzzle</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 2px;
+            width: 90vw;
+            max-width: 400px;
+            height: 90vw;
+            max-height: 400px;
+            background-color: #ccc;
+            border: 5px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .tile {
+            background-size: 300px 300px; /* Adjust based on container max-width */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Adjust background-size dynamically for responsiveness */
+        @media (max-width: 400px) {
+            .tile {
+                background-size: 90vw 90vw;
+            }
+        }
+
+        @media (min-width: 401px) {
+            .tile {
+                background-size: 400px 400px;
+            }
+        }
+
+        .tile.empty {
+            background: #eee !important;
+            cursor: default;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #28a745;
+            height: 1.5rem;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Solve the Puzzle!</h1>
+    
+    <div id="puzzle-container">
+        </div>
+
+    <div id="status"></div>
+    <button onclick="shufflePuzzle()">Shuffle</button>
+
+    <script>
+        // --- CONFIGURATION ---
+        // 1. Upload your image to a hosting service (like Imgur, PostImages, or your GitHub repository).
+        // 2. Paste the direct link to the image below.
+        const imageUrl = 'https://github.com/aabirghosh2020-coder/PUZZLE/blob/main/IMG_20260314_152053.jpg';
+
+        const gridSize = 3; // 3x3 puzzle
+        const container = document.getElementById('puzzle-container');
+        const statusDisplay = document.getElementById('status');
+        
+        let tiles = [];
+        let emptyTileIndex = gridSize * gridSize - 1; // Start with the last tile empty
+
+        // Initialize the puzzle
+        function createPuzzle() {
+            container.innerHTML = ''; // Clear existing tiles
+            tiles = [];
+            
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                
+                // Set background image and position for non-empty tiles
+                if (i !== emptyTileIndex) {
+                    tile.style.backgroundImage = `url(${imageUrl})`;
+                    
+                    // Calculate background position
+                    const row = Math.floor(i / gridSize);
+                    const col = i % gridSize;
+                    // Position needs to be negative to show the correct part of the image
+                    const posX = (col / (gridSize - 1)) * 100;
+                    const posY = (row / (gridSize - 1)) * 100;
+                    tile.style.backgroundPosition = `${posX}% ${posY}%`;
+                } else {
+                    tile.classList.add('empty');
+                }
+
+                // Add click listener
+                tile.addEventListener('click', () => moveTile(i));
+                
+                tiles.push(tile);
+                container.appendChild(tile);
+            }
+            
+            statusDisplay.textContent = "";
+        }
+
+        // Handle tile movement
+        function moveTile(index) {
+            // Check if the clicked tile is adjacent to the empty tile
+            const row = Math.floor(index / gridSize);
+            const col = index % gridSize;
+            const emptyRow = Math.floor(emptyTileIndex / gridSize);
+            const emptyCol = emptyTileIndex % gridSize;
+
+            const isAdjacent = (Math.abs(row - emptyRow) === 1 && col === emptyCol) || 
+                             (Math.abs(col - emptyCol) === 1 && row === emptyRow);
+
+            if (isAdjacent) {
+                // Swap the clicked tile with the empty tile in the array
+                [tiles[index], tiles[emptyTileIndex]] = [tiles[emptyTileIndex], tiles[index]];
+                emptyTileIndex = index;
+                renderTiles();
+                checkWin();
+            }
+        }
+
+        // Re-render the tiles in the container based on the tiles array order
+        function renderTiles() {
+            container.innerHTML = '';
+            tiles.forEach((tile, index) => {
+                // Update the click listener to reflect the new index
+                tile.onclick = () => moveTile(index);
+                container.appendChild(tile);
+            });
+        }
+
+        // Shuffle the puzzle (ensuring it's solvable)
+        function shufflePuzzle() {
+            // Simple random shuffle isn't enough; must make valid moves
+            for (let i = 0; i < 200; i++) {
+                const possibleMoves = [];
+                const emptyRow = Math.floor(emptyTileIndex / gridSize);
+                const emptyCol = emptyTileIndex % gridSize;
+
+                // Check Up
+                if (emptyRow > 0) possibleMoves.push(emptyTileIndex - gridSize);
+                // Check Down
+                if (emptyRow < gridSize - 1) possibleMoves.push(emptyTileIndex + gridSize);
+                // Check Left
+                if (emptyCol > 0) possibleMoves.push(emptyTileIndex - 1);
+                // Check Right
+                if (emptyCol < gridSize - 1) possibleMoves.push(emptyTileIndex + 1);
+
+                const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                
+                // Swap
+                [tiles[move], tiles[emptyTileIndex]] = [tiles[emptyTileIndex], tiles[move]];
+                emptyTileIndex = move;
+            }
+            
+            renderTiles();
+            statusDisplay.textContent = "";
+        }
+
+        // Check if the puzzle is solved
+        function checkWin() {
+            let isSolved = true;
+            tiles.forEach((tile, index) => {
+                const row = Math.floor(index / gridSize);
+                const col = index % gridSize;
+                
+                // Check position
+                const posX = (col / (gridSize - 1)) * 100;
+                const posY = (row / (gridSize - 1)) * 100;
+                
+                const expectedPosition = `${posX}% ${posY}%`;
+                
+                if (index !== gridSize * gridSize - 1) { // Ignore the empty tile slot
+                     if(tile.style.backgroundPosition !== expectedPosition && !tile.classList.contains('empty')) {
+                         isSolved = false;
+                     }
+                }
+            });
+
+            if (isSolved) {
+                statusDisplay.textContent = "🎉 Puzzle Solved! 🎉";
+            }
+        }
+
+        // Start the game
+        createPuzzle();
+        // You can choose to shuffle automatically on load
+        // shufflePuzzle(); 
+
+    </script>
+</body>
+</html>
